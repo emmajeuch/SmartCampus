@@ -1,0 +1,53 @@
+HORAIRE_SERVICE: id_horaire, jour_semaine, heure_ouverture, heure_fermeture
+OUVRE, 11 HORAIRE_SERVICE, 0N SERVICE
+SERVICE: id_service, nom, categorie, telephone, email, lien
+CONCERNE, 01 MORCEAU, 0N SERVICE
+MORCEAU: id_morceau, texte, vecteur, titre_document, page, lien
+
+ANNONCE: id_annonce, titre, lien, date_pub, categorie, resume
+:
+HEBERGE, 11 SERVICE, 0N BATIMENT
+:
+:
+
+:
+:
+BATIMENT: id_batiment, nom, adresse
+:
+:
+
+:
+:
+SE TROUVE DANS, 11 SALLE, 0N BATIMENT
+:
+:
+
+EXAMEN: id_examen, date_examen, heure_debut, heure_fin, type
+SE PASSE DANS, 11 EXAMEN, 0N SALLE
+SALLE: id_salle, nom, capacite, type
+:
+:
+
+EVALUE, 11 EXAMEN, 0N COURS
+:
+A LIEU DANS, 11 SEANCE, 0N SALLE
+:
+:
+
+COURS: id_cours, intitule, code, ects
+DE, 11 SEANCE, 0N COURS
+SEANCE: id_seance, date_seance, heure_debut, heure_fin, type
+POUR, 11 SEANCE, 0N GROUPE
+GROUPE: id_groupe, nom
+
+ENSEIGNE, 11 COURS, 0N ENSEIGNANT
+PROPOSE, 11 COURS, 1N FORMATION
+:
+APPARTIENT A, 11 GROUPE, 1N FORMATION
+INSCRIT DANS, 11 ETUDIANT, 0N GROUPE
+
+ENSEIGNANT: id_enseignant, nom, prenom, email
+:
+FORMATION: id_formation, intitule, niveau
+:
+ETUDIANT: id_etudiant, nom, prenom, email
