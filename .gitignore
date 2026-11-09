@@ -1,0 +1,9 @@
+# Clés secrètes : jamais sur GitHub
+.streamlit/secrets.toml
+
+# Fichiers de verrou d'Access
+*.laccdb
+
+# Python
+__pycache__/
+.venv/
