@@ -1,0 +1,7 @@
+id_service;nom;categorie;telephone;email;lien;id_batiment
+1;Scolarité de la L2 Numérique et Management;scolarité;05 00 00 00 01;scolarite.nm@univ-exemple.fr;https://www.ut-capitole.fr;2
+2;Bibliothèque universitaire;bibliothèque;05 00 00 00 02;bu@univ-exemple.fr;https://www.ut-capitole.fr;4
+3;Restaurant universitaire;restauration;05 00 00 00 03;restauration@univ-exemple.fr;https://www.ut-capitole.fr;1
+4;Service de santé étudiante;santé;05 00 00 00 04;sante@univ-exemple.fr;https://www.ut-capitole.fr;3
+5;Orientation et insertion professionnelle;orientation;05 00 00 00 05;orientation@univ-exemple.fr;https://www.ut-capitole.fr;2
+6;Relations internationales;international;05 00 00 00 06;international@univ-exemple.fr;https://www.ut-capitole.fr;2

@@ -1,0 +1,13 @@
+id_salle;nom;capacite;type;id_batiment
+1;Amphi Garonne;300;amphi;1
+2;G101;40;TD;1
+3;G102;40;TD;1
+4;G201;30;TP info;1
+5;G202;30;TP info;1
+6;Amphi Capitole;200;amphi;2
+7;C110;35;TD;2
+8;C111;35;TD;2
+9;C112;35;TD;2
+10;B01;30;TD;3
+11;B02;120;examen;3
+12;B03;24;TP info;3

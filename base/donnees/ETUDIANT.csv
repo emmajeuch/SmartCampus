@@ -1,0 +1,9 @@
+id_etudiant;nom;prenom;email;id_groupe
+1;Petit;Lina;lina.petit@etu.univ-exemple.fr;1
+2;Blanc;Noah;noah.blanc@etu.univ-exemple.fr;1
+3;Faure;Jade;jade.faure@etu.univ-exemple.fr;2
+4;Lambert;Adam;adam.lambert@etu.univ-exemple.fr;2
+5;Rousseau;Chloé;chloe.rousseau@etu.univ-exemple.fr;3
+6;Vincent;Rayan;rayan.vincent@etu.univ-exemple.fr;3
+7;Muller;Manon;manon.muller@etu.univ-exemple.fr;4
+8;Henry;Lucas;lucas.henry@etu.univ-exemple.fr;4
