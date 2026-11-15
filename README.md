@@ -24,9 +24,18 @@ L'application s'ouvre dans le navigateur.
 |---|---|
 | `app.py` | L'application Streamlit |
 | `requirements.txt` | Les bibliothèques Python à installer |
+| `smartcampus.db` | La base SQLite lue par l'application (en lecture seule) |
+| `base/` | Script de création, jeu de données, script qui fabrique la base, requêtes d'exemple (voir `base/README.md`) |
+| `conception/` | Le MCD |
 
-La base de données (Access, puis `smartcampus.db`), les documents et les scripts
-arriveront au fil du projet.
+Les documents pour le chatbot et les scripts d'actualités arriveront au fil du projet.
+
+## Ce qui marche aujourd'hui
+
+- **Mon emploi du temps** : les cours d'un groupe pour un jour, les prochains examens de sa formation,
+  et les salles libres sur un créneau.
+- **Actualités** : les annonces (fictives), filtrées par catégorie. Les résumés viendront de l'IA.
+- **Chat** : pas encore branché sur l'IA.
 
 ## Règles
 
