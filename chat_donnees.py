@@ -129,9 +129,17 @@ def executer(sql, chemin_base):
     """Lance la requête en lecture seule et garde au plus LIGNES_MAX lignes."""
     connexion = sqlite3.connect(f"file:{chemin_base}?mode=ro", uri=True)
     try:
-        return pd.read_sql_query(sql.strip().rstrip(";"), connexion).head(LIGNES_MAX)
+        resultat = pd.read_sql_query(sql.strip().rstrip(";"), connexion).head(LIGNES_MAX)
     finally:
         connexion.close()
+    # Deux colonnes peuvent porter le même nom (le nom du cours et celui de la salle) :
+    # on numérote les doublons, sinon le tableau de Streamlit refuse de s'afficher.
+    vus, noms = {}, []
+    for nom in resultat.columns:
+        vus[nom] = vus.get(nom, 0) + 1
+        noms.append(nom if vus[nom] == 1 else f"{nom}_{vus[nom]}")
+    resultat.columns = noms
+    return resultat
 
 
 # ---------------------------------------------------------------- 3. résultat -> réponse
