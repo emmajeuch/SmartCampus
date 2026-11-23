@@ -48,7 +48,6 @@ CREATE TABLE ENSEIGNANT (
 CREATE TABLE COURS (
     id_cours      INTEGER PRIMARY KEY,
     intitule      TEXT NOT NULL,
-    code          TEXT,
     ects          INTEGER,
     id_formation  INTEGER NOT NULL REFERENCES FORMATION(id_formation),
     id_enseignant INTEGER NOT NULL REFERENCES ENSEIGNANT(id_enseignant)

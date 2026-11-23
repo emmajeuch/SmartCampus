@@ -1,22 +1,22 @@
-id_cours;intitule;code;ects;id_formation;id_enseignant
-1;Base de données;ILCMC306;5;1;1
-2;Data structure et algorithmes;ILCMC305;6;1;2
-3;Atelier numérique et management;ILCMC309;2;1;3
-4;Ethics, responsibility and sustainability of IT;ILCMC308;4;1;4
-5;Finance d'entreprise;ILCMC302;6;1;5
-6;Contrôle de gestion;ILCMC301;5;1;6
-7;Gestion des ressources humaines;ILCMC303;5;1;7
-8;Anglais;ILUMC300;4;1;8
-9;Manager responsable et citoyen;MRC-L2;1;1;9
-10;Développement professionnel;DP-L2;1;1;10
-11;Mathématiques pour l'économie;L1MI101;6;2;1
-12;Statistiques descriptives;L1MI102;5;2;2
-13;Introduction à la programmation;L1MI103;5;2;3
-14;Économie générale;L1MI104;5;2;5
-15;Comptabilité générale;L1MI105;4;2;6
-16;Anglais L1;L1MI106;3;2;8
-17;Gestion de projet;L3NM201;5;3;3
-18;Systèmes d'information;L3NM202;5;3;4
-19;Marketing digital;L3NM203;4;3;7
-20;Science des données;L3NM204;6;3;2
-21;Droit du numérique;L3NM205;3;3;9
+id_cours;intitule;ects;id_formation;id_enseignant
+1;Base de données;5;1;1
+2;Data structure et algorithmes;6;1;2
+3;Atelier numérique et management;2;1;3
+4;Ethics, responsibility and sustainability of IT;4;1;4
+5;Finance d'entreprise;6;1;5
+6;Contrôle de gestion;5;1;6
+7;Gestion des ressources humaines;5;1;7
+8;Anglais;4;1;8
+9;Manager responsable et citoyen;1;1;9
+10;Développement professionnel;1;1;10
+11;Mathématiques pour l'économie;6;2;1
+12;Statistiques descriptives;5;2;2
+13;Introduction à la programmation;5;2;3
+14;Économie générale;5;2;5
+15;Comptabilité générale;4;2;6
+16;Anglais L1;3;2;8
+17;Gestion de projet;5;3;3
+18;Systèmes d'information;5;3;4
+19;Marketing digital;4;3;7
+20;Science des données;6;3;2
+21;Droit du numérique;3;3;9

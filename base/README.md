@@ -9,7 +9,7 @@
 
 Le jeu de données : 3 formations, 4 groupes, 21 cours, 12 salles dans 4 bâtiments, 10 enseignants,
 8 étudiants, 175 séances (du 16/11 au 18/12/2026), 6 examens, 6 services et leurs horaires, 6 annonces.
-Tout est fictif, sauf les intitulés, codes et ECTS des cours de L2 NM et les dates des examens de BDD
+Tout est fictif, sauf les intitulés et ECTS des cours de L2 NM et les dates des examens de BDD
 (19/11) et de contrôle de gestion (30/11).
 
 ## Refaire la base
