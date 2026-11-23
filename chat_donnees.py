@@ -18,6 +18,8 @@ import requests
 MODELE = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 LIGNES_MAX = 50          # on ne renvoie jamais plus de 50 lignes à l'IA
 ESSAIS_MAX = 2           # si la requête plante, l'IA a droit à une seconde chance
+# Colonnes dont on donne les valeurs possibles à l'IA, pour qu'elle filtre avec les vrais mots.
+COLONNES_A_VALEURS = {"categorie", "type", "niveau", "jour_semaine"}
 
 # Mots qui modifient la base ou sortent de nos tables : refusés d'office.
 MOTS_INTERDITS = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "REPLACE",
@@ -59,6 +61,10 @@ def decrire_base(chemin_base):
                 texte = nom + (" (clé primaire)" if est_cle else "")
                 if nom in vers:
                     texte += f" -> {vers[nom]}"
+                if nom in COLONNES_A_VALEURS:
+                    valeurs = [v[0] for v in connexion.execute(
+                        f"SELECT DISTINCT {nom} FROM {table} WHERE {nom} IS NOT NULL ORDER BY 1")]
+                    texte += " [valeurs : " + ", ".join(f"'{v}'" for v in valeurs) + "]"
                 morceaux.append(texte)
             lignes.append(f"{table}({', '.join(morceaux)})")
         return "\n".join(lignes), set(tables)
@@ -84,7 +90,8 @@ Règles :
 - SEANCE.type vaut 'CM', 'TD' ou 'TP'. HORAIRE_SERVICE.jour_semaine est en minuscules ('lundi'...).
 - Aujourd'hui, nous sommes le {aujourd_hui}. « Demain », « jeudi », « cette semaine » se calculent à partir de cette date.
 - L'étudiant qui pose la question est dans le groupe « {groupe} » (table GROUPE, colonne nom).
-- Si la question ne concerne pas la base (cours, salles, examens, services, annonces), réponds exactement : HORS_BASE"""
+- Si la question contient plusieurs demandes, écris la requête pour celle qui concerne la base et ignore les autres.
+- Seulement si aucune partie de la question ne concerne la base (cours, salles, examens, services, annonces), réponds exactement : HORS_BASE"""
 
 
 def nettoyer(texte):
@@ -134,7 +141,8 @@ Tu tutoies l'étudiant et tu réponds en français, en deux ou trois phrases, à
 Le résultat a déjà été filtré par une requête SQL : chaque ligne répond à la question (la bonne date, le bon groupe, le bon cours). S'il contient des lignes, donne-les.
 Écris les dates en JJ/MM/AAAA et les heures comme 14 h 30.
 Seulement si le résultat indique « (aucune ligne) », dis que tu n'as rien trouvé dans la base et propose de reformuler.
-N'invente jamais une salle, une heure ou un nom absent du résultat."""
+N'invente jamais une salle, une heure ou un nom absent du résultat.
+Si la question contient d'autres demandes auxquelles le résultat ne répond pas (une démarche, une inscription, le règlement, un logiciel), dis en une phrase que tu ne peux pas encore y répondre : ces réponses viendront des documents de l'université."""
 
 
 def rediger(question, sql, resultat, compte, jeton):
@@ -156,7 +164,8 @@ def repondre(question, chemin_base, aujourd_hui, groupe, compte, jeton):
         sql = nettoyer(appeler_ia(messages, compte, jeton))
         if sql.upper().startswith("HORS_BASE"):
             return {"reponse": "Je réponds pour l'instant aux questions sur les cours, les salles, "
-                               "les examens, les services et les annonces de l'université.",
+                               "les examens, les services et les annonces de l'université. Les démarches "
+                               "et le règlement viendront avec les documents de l'université.",
                     "sql": None, "resultat": None}
         refus = verifier(sql)
         if refus:
