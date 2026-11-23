@@ -42,3 +42,14 @@ On modifie les données dans Access, puis :
    avec les noms des champs, en UTF-8, sous le même nom dans `base/donnees/`.
 2. Lancer `python base/creer_base.py`.
 3. Envoyer sur GitHub les CSV et `smartcampus.db` : le site se met à jour.
+
+## Les documents du chat (RAG)
+
+1. Mettre les PDF de l'université dans `documents/` et ajouter une ligne par fichier dans
+   `documents/sources.csv` (`fichier;titre;lien`).
+2. `python base/decouper_documents.py` (il faut `pypdf` : `pip install pypdf`) : chaque page est coupée
+   en morceaux d'environ 900 caractères, écrits dans `donnees/MORCEAU.csv`.
+3. `python base/creer_base.py` pour refaire `smartcampus.db`.
+
+La colonne `vecteur` reste vide dans le CSV : l'application calcule les embeddings avec Workers AI
+(modèle bge-m3) au premier usage et les garde en mémoire (`rag.py`).

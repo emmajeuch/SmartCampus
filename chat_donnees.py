@@ -1,4 +1,4 @@
-"""Voie « données » du chat SmartCampus.
+"""Chat SmartCampus : voie « données » (SQL vérifié) et assemblage avec la voie « documents » (rag.py).
 
 Une question en français devient une requête SQL, la requête est vérifiée,
 lancée sur smartcampus.db, puis l'IA rédige la réponse à partir du résultat.
@@ -14,6 +14,8 @@ import sqlite3
 
 import pandas as pd
 import requests
+
+import rag
 
 MODELE = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
 LIGNES_MAX = 50          # on ne renvoie jamais plus de 50 lignes à l'IA
@@ -156,45 +158,64 @@ def executer(sql, chemin_base):
 # ---------------------------------------------------------------- 3. résultat -> réponse
 
 CONSIGNE_REPONSE = """Tu es SmartCampus, l'assistant des étudiants de l'université Toulouse Capitole.
-Tu tutoies l'étudiant et tu réponds en français, en deux ou trois phrases, à partir du résultat de la base qu'on te donne et de lui seul.
-Le résultat a déjà été filtré par une requête SQL : chaque ligne répond à la question (la bonne date, le bon groupe, le bon cours). S'il contient des lignes, donne-les.
+Tu tutoies l'étudiant et tu réponds en français, en trois ou quatre phrases au plus, à partir de ce qu'on te donne et de rien d'autre :
+le résultat d'une requête sur la base de l'université, et des passages de documents officiels de l'université.
+Le résultat de la base a déjà été filtré par une requête SQL : chaque ligne répond à la question (la bonne date, le bon groupe, le bon cours). S'il contient des lignes, donne-les.
+Pour une démarche ou une règle, appuie-toi sur les passages et cite la source entre parenthèses, par exemple (Guide de l'étudiant 2026-2027, p. 26).
 Écris les dates en JJ/MM/AAAA et les heures comme 14 h 30.
-Seulement si le résultat indique « (aucune ligne) », dis que tu n'as rien trouvé dans la base et propose de reformuler.
-N'invente jamais une salle, une heure ou un nom absent du résultat.
-Si la question contient d'autres demandes auxquelles le résultat ne répond pas (une démarche, une inscription, le règlement, un logiciel), dis en une phrase que tu ne peux pas encore y répondre : ces réponses viendront des documents de l'université."""
+N'invente jamais une salle, une heure, un nom, une date ou une règle absents de ce qu'on te donne.
+Si une partie de la question ne trouve de réponse ni dans le résultat ni dans les passages, dis-le en une phrase et conseille le service de l'université concerné."""
 
 
-def rediger(question, sql, resultat, compte, jeton):
-    tableau = "(aucune ligne)" if resultat.empty else resultat.to_csv(index=False, sep=";")
+def rediger(question, sql, resultat, passages, compte, jeton):
+    contexte = []
+    if sql:
+        tableau = "(aucune ligne)" if resultat is None or resultat.empty else resultat.to_csv(index=False, sep=";")
+        contexte.append(f"Requête lancée :\n{sql}\n\nRésultat de la base :\n{tableau}")
+    else:
+        contexte.append("Résultat de la base : (aucune requête, la question ne porte pas sur la base)")
+    if passages:
+        textes = "\n\n".join(f"[{p['titre']}, p. {p['page']}]\n{p['texte']}" for p in passages)
+        contexte.append(f"Passages des documents de l'université :\n{textes}")
+    else:
+        contexte.append("Passages des documents de l'université : (aucun passage sur ce sujet)")
     messages = [{"role": "system", "content": CONSIGNE_REPONSE},
-                {"role": "user", "content": f"Question : {question}\n\nRequête lancée :\n{sql}\n\nRésultat de la base :\n{tableau}"}]
+                {"role": "user", "content": f"Question : {question}\n\n" + "\n\n".join(contexte)}]
     return appeler_ia(messages, compte, jeton)
 
 
 # ---------------------------------------------------------------- tout ensemble
 
-def repondre(question, chemin_base, aujourd_hui, groupe, compte, jeton):
-    """Renvoie un dictionnaire : la réponse, et de quoi montrer comment on l'a trouvée."""
+def interroger_base(question, chemin_base, aujourd_hui, groupe, compte, jeton):
+    """Voie « données » : renvoie (requête, résultat, remarque). La requête vaut None si
+    la question ne porte pas sur la base."""
     schema, _ = decrire_base(chemin_base)
     messages = [{"role": "system", "content": consigne_sql(schema, aujourd_hui, groupe)},
                 {"role": "user", "content": question}]
-    sql, erreur = "", ""
+    sql = ""
     for _ in range(ESSAIS_MAX):
         sql = nettoyer(appeler_ia(messages, compte, jeton))
         if sql.upper().startswith("HORS_BASE"):
-            return {"reponse": "Je réponds pour l'instant aux questions sur les cours, les salles, "
-                               "les examens, les services et les annonces de l'université. Les démarches "
-                               "et le règlement viendront avec les documents de l'université.",
-                    "sql": None, "resultat": None}
+            return None, None, None
         refus = verifier(sql)
         if refus:
-            return {"reponse": f"Je n'ai pas lancé la requête préparée ({refus}).", "sql": sql, "resultat": None}
+            return sql, None, f"requête refusée : {refus}"
         try:
-            resultat = executer(sql, chemin_base)
-            return {"reponse": rediger(question, sql, resultat, compte, jeton), "sql": sql, "resultat": resultat}
+            return sql, executer(sql, chemin_base), None
         except Exception as exc:          # requête mal écrite : on renvoie l'erreur à l'IA
-            erreur = str(exc)
             messages += [{"role": "assistant", "content": sql},
-                         {"role": "user", "content": f"SQLite répond : {erreur}. Corrige la requête."}]
-    return {"reponse": "Je n'ai pas réussi à trouver la réponse dans la base. Essaie de reformuler.",
-            "sql": sql, "resultat": None, "erreur": erreur}
+                         {"role": "user", "content": f"SQLite répond : {exc}. Corrige la requête."}]
+    return sql, None, "la requête n'a pas marché après deux essais"
+
+
+def repondre(question, chemin_base, aujourd_hui, groupe, compte, jeton):
+    """Les deux voies ensemble : la base (SQL vérifié) et les documents (RAG).
+    Renvoie la réponse, et de quoi montrer comment on l'a trouvée."""
+    passages = rag.chercher(question, chemin_base, compte, jeton)
+    sql, resultat, remarque = interroger_base(question, chemin_base, aujourd_hui, groupe, compte, jeton)
+    if sql is None and not passages:
+        return {"reponse": "Je réponds aux questions sur la vie à l'université : cours, salles, examens, "
+                           "services, annonces et démarches. Là, je n'ai rien trouvé sur ce sujet.",
+                "sql": None, "resultat": None, "passages": []}
+    reponse = rediger(question, sql if resultat is not None else None, resultat, passages, compte, jeton)
+    return {"reponse": reponse, "sql": sql, "resultat": resultat, "passages": passages, "remarque": remarque}

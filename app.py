@@ -57,12 +57,18 @@ with chat:
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
-            if message.get("sql"):
-                # On montre comment la réponse a été trouvée : la requête et ce que la base a renvoyé.
+            if message.get("sql") or message.get("passages"):
+                # On montre comment la réponse a été trouvée : la requête et ce que la base a renvoyé,
+                # puis les passages des documents de l'université.
                 with st.expander("Comment j'ai trouvé"):
-                    st.code(message["sql"], language="sql")
-                    if message.get("resultat") is not None:
-                        st.dataframe(message["resultat"], hide_index=True, width="stretch")
+                    if message.get("sql"):
+                        st.code(message["sql"], language="sql")
+                        if message.get("resultat") is not None:
+                            st.dataframe(message["resultat"], hide_index=True, width="stretch")
+                    for passage in message.get("passages") or []:
+                        st.markdown(f"**[{passage['titre']}, p. {passage['page']}]({passage['lien']})** "
+                                    f"· proximité {passage['score']}")
+                        st.caption(passage["texte"])
 
     question = st.chat_input("Pose ta question")
     if question:
@@ -82,7 +88,8 @@ with chat:
                 except requests.RequestException:
                     trouve = {"reponse": "Je n'arrive pas à joindre l'IA pour l'instant. Réessaie dans un moment."}
             st.session_state.messages.append({"role": "assistant", "content": trouve["reponse"],
-                                              "sql": trouve.get("sql"), "resultat": trouve.get("resultat")})
+                                              "sql": trouve.get("sql"), "resultat": trouve.get("resultat"),
+                                              "passages": trouve.get("passages")})
         st.rerun()
 
 with edt:
