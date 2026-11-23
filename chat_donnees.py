@@ -90,6 +90,17 @@ Règles :
 - SEANCE.type vaut 'CM', 'TD' ou 'TP'. HORAIRE_SERVICE.jour_semaine est en minuscules ('lundi'...).
 - Aujourd'hui, nous sommes le {aujourd_hui}. « Demain », « jeudi », « cette semaine » se calculent à partir de cette date.
 - L'étudiant qui pose la question est dans le groupe « {groupe} » (table GROUPE, colonne nom).
+- Un cours, un examen ou une salle se cherchent dans SEANCE, EXAMEN et SALLE. ANNONCE ne sert que si on demande une annonce ou une actualité.
+- « Mon prochain examen » : les examens des cours de la formation du groupe, à partir d'aujourd'hui, triés par date et heure, LIMIT 1.
+
+Exemples (groupe « L2 NM groupe 2 », aujourd'hui 2026-11-23) :
+Question : quels cours j'ai demain ?
+SELECT SE.date_seance, SE.heure_debut, SE.heure_fin, C.intitule, SE.type, SA.nom AS salle FROM SEANCE SE, COURS C, SALLE SA, GROUPE G WHERE SE.id_cours = C.id_cours AND SE.id_salle = SA.id_salle AND SE.id_groupe = G.id_groupe AND G.nom = 'L2 NM groupe 2' AND SE.date_seance = '2026-11-24' ORDER BY SE.heure_debut
+Question : c'est quand mon prochain exam ?
+SELECT EX.date_examen, EX.heure_debut, EX.heure_fin, C.intitule, EX.type, SA.nom AS salle FROM EXAMEN EX, COURS C, SALLE SA, GROUPE G WHERE EX.id_cours = C.id_cours AND EX.id_salle = SA.id_salle AND C.id_formation = G.id_formation AND G.nom = 'L2 NM groupe 2' AND EX.date_examen >= '2026-11-23' ORDER BY EX.date_examen, EX.heure_debut LIMIT 1
+Question : quels sont les horaires de la bibliothèque ?
+SELECT H.jour_semaine, H.heure_ouverture, H.heure_fermeture FROM SERVICE S, HORAIRE_SERVICE H WHERE S.id_service = H.id_service AND S.nom LIKE '%Bibliothèque%'
+
 - Si la question contient plusieurs demandes, écris la requête pour celle qui concerne la base et ignore les autres.
 - Seulement si aucune partie de la question ne concerne la base (cours, salles, examens, services, annonces), réponds exactement : HORS_BASE"""
 
