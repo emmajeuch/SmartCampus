@@ -80,6 +80,7 @@ Règles :
 - Écris les jointures dans le WHERE (FROM A, B WHERE A.x = B.x), pas de JOIN.
 - Les dates sont du texte AAAA-MM-JJ et les heures du texte HH:MM : compare-les avec <, >, =.
 - Pour chercher un nom (cours, service, salle), utilise LIKE '%mot%' plutôt que =.
+- Sélectionne toutes les colonnes utiles à la réponse : pour un cours ou un examen, la date, les heures, l'intitulé, le type et la salle ; pour un service, le jour et les horaires.
 - SEANCE.type vaut 'CM', 'TD' ou 'TP'. HORAIRE_SERVICE.jour_semaine est en minuscules ('lundi'...).
 - Aujourd'hui, nous sommes le {aujourd_hui}. « Demain », « jeudi », « cette semaine » se calculent à partir de cette date.
 - L'étudiant qui pose la question est dans le groupe « {groupe} » (table GROUPE, colonne nom).
@@ -129,16 +130,17 @@ def executer(sql, chemin_base):
 # ---------------------------------------------------------------- 3. résultat -> réponse
 
 CONSIGNE_REPONSE = """Tu es SmartCampus, l'assistant des étudiants de l'université Toulouse Capitole.
-Tu réponds en français, en deux ou trois phrases, à partir du résultat de la base qu'on te donne et de lui seul.
+Tu tutoies l'étudiant et tu réponds en français, en deux ou trois phrases, à partir du résultat de la base qu'on te donne et de lui seul.
+Le résultat a déjà été filtré par une requête SQL : chaque ligne répond à la question (la bonne date, le bon groupe, le bon cours). S'il contient des lignes, donne-les.
 Écris les dates en JJ/MM/AAAA et les heures comme 14 h 30.
-Si le résultat est vide, dis que tu n'as rien trouvé dans la base et propose de reformuler.
+Seulement si le résultat indique « (aucune ligne) », dis que tu n'as rien trouvé dans la base et propose de reformuler.
 N'invente jamais une salle, une heure ou un nom absent du résultat."""
 
 
-def rediger(question, resultat, compte, jeton):
+def rediger(question, sql, resultat, compte, jeton):
     tableau = "(aucune ligne)" if resultat.empty else resultat.to_csv(index=False, sep=";")
     messages = [{"role": "system", "content": CONSIGNE_REPONSE},
-                {"role": "user", "content": f"Question : {question}\n\nRésultat de la base :\n{tableau}"}]
+                {"role": "user", "content": f"Question : {question}\n\nRequête lancée :\n{sql}\n\nRésultat de la base :\n{tableau}"}]
     return appeler_ia(messages, compte, jeton)
 
 
@@ -161,7 +163,7 @@ def repondre(question, chemin_base, aujourd_hui, groupe, compte, jeton):
             return {"reponse": f"Je n'ai pas lancé la requête préparée ({refus}).", "sql": sql, "resultat": None}
         try:
             resultat = executer(sql, chemin_base)
-            return {"reponse": rediger(question, resultat, compte, jeton), "sql": sql, "resultat": resultat}
+            return {"reponse": rediger(question, sql, resultat, compte, jeton), "sql": sql, "resultat": resultat}
         except Exception as exc:          # requête mal écrite : on renvoie l'erreur à l'IA
             erreur = str(exc)
             messages += [{"role": "assistant", "content": sql},
