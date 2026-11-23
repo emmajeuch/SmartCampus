@@ -3,7 +3,10 @@ import os
 import sqlite3
 
 import pandas as pd
+import requests
 import streamlit as st
+
+from chat_donnees import repondre
 
 # La base est lue en lecture seule : l'application ne peut rien y modifier.
 CHEMIN_BASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "smartcampus.db")
@@ -47,14 +50,39 @@ with chat:
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
+    groupes_chat = lire("SELECT nom FROM GROUPE ORDER BY nom").nom.tolist()
+    groupe_chat = st.selectbox("Ton groupe", groupes_chat, key="groupe_chat",
+                               index=groupes_chat.index("L2 NM groupe 2") if "L2 NM groupe 2" in groupes_chat else 0)
+
     for message in st.session_state.messages:
-        st.chat_message(message["role"]).write(message["content"])
+        with st.chat_message(message["role"]):
+            st.write(message["content"])
+            if message.get("sql"):
+                # On montre comment la réponse a été trouvée : la requête et ce que la base a renvoyé.
+                with st.expander("Comment j'ai trouvé"):
+                    st.code(message["sql"], language="sql")
+                    if message.get("resultat") is not None:
+                        st.dataframe(message["resultat"], hide_index=True, width="stretch")
 
     question = st.chat_input("Pose ta question")
     if question:
-        reponse = "Bonjour ! Je ne sais pas encore répondre : le chatbot arrive bientôt."
         st.session_state.messages.append({"role": "user", "content": question})
-        st.session_state.messages.append({"role": "assistant", "content": reponse})
+        try:
+            compte, jeton = st.secrets["CF_ACCOUNT_ID"], st.secrets["CF_API_TOKEN"]
+        except Exception:                 # pas de secrets (par exemple en local)
+            compte = jeton = None
+        if not compte or not jeton:
+            st.session_state.messages.append({"role": "assistant",
+                                              "content": "La clé Workers AI manque dans les secrets de l'application."})
+        else:
+            with st.spinner("Je cherche dans la base…"):
+                try:
+                    trouve = repondre(question, CHEMIN_BASE, date_en_francais(datetime.date.today()) +
+                                      f" ({datetime.date.today().isoformat()})", groupe_chat, compte, jeton)
+                except requests.RequestException:
+                    trouve = {"reponse": "Je n'arrive pas à joindre l'IA pour l'instant. Réessaie dans un moment."}
+            st.session_state.messages.append({"role": "assistant", "content": trouve["reponse"],
+                                              "sql": trouve.get("sql"), "resultat": trouve.get("resultat")})
         st.rerun()
 
 with edt:
